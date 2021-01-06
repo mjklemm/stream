@@ -4,6 +4,8 @@ NTIMES=10
 
 DEBUG=-g
 
+TYPES=-DDO_COPY=1 -DDO_ADD=1 -DDO_COPY=1 -DDO_TRIAD=1
+
 all: stream.clang-nts stream.clang
 
 stream_f.exe: stream.f mysecond.o
@@ -16,16 +18,16 @@ stream_c.exe: stream.c
 
 
 stream.icc-nts: Makefile stream.c
-	icc $(DEBUG) -Ofast -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -qopt-streaming-stores always -o stream.icc-nts stream.c
+	icc $(DEBUG) -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -qopt-streaming-stores always -o stream.icc-nts stream.c
 
 stream.icc: Makefile stream.c
-	icc $(DEBUG) -Ofast -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -o stream.icc stream.c
+	icc $(DEBUG) -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -o stream.icc stream.c
 
 stream.clang-nts: Makefile stream.c
-	clang $(DEBUG) -O3 -mavx2 -mcmodel=medium -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -ffp-contract=fast -march=znver2 -fno-unroll-loops -fopenmp -fnt-store -o stream.clang-nts stream.c
+	clang $(DEBUG) -O3 -mavx2 -mcmodel=medium $(TYPES) -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -ffp-contract=fast -march=znver2 -fno-unroll-loops -fopenmp -fnt-store -o stream.clang-nts stream.c
 
 stream.clang: Makefile stream.c
-	clang $(DEBUG) -O3 -mavx2 -mcmodel=medium -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -ffp-contract=fast -march=znver2 -fno-unroll-loops -fopenmp -o stream.clang stream.c
+	clang $(DEBUG) -O3 -mavx2 -mcmodel=medium $(TYPES) -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -ffp-contract=fast -march=znver2 -fno-unroll-loops -fopenmp -o stream.clang stream.c
 
 clean:
 	rm -f *.o

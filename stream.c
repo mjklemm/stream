@@ -46,6 +46,7 @@
 # include <float.h>
 # include <limits.h>
 # include <sys/time.h>
+# include <string.h>
 
 /*-----------------------------------------------------------------------
  * INSTRUCTIONS:
@@ -183,8 +184,28 @@ static STREAM_TYPE	a[STREAM_ARRAY_SIZE+OFFSET],
 static double	avgtime[4] = {0}, maxtime[4] = {0},
 		mintime[4] = {FLT_MAX,FLT_MAX,FLT_MAX,FLT_MAX};
 
-static char	*label[4] = {"Copy:      ", "Scale:     ",
-    "Add:       ", "Triad:     "};
+static char	*label[4] = {
+#if DO_COPY
+    "Copy:      ",
+#else
+    "ignore",
+#endif
+#if DO_SCALE
+    "Scale:     ",
+#else
+    "ignore",
+#endif
+#if DO_ADD
+    "Add:       ",
+#else
+    "ignore",
+#endif
+#if DO_TRIAD
+    "Triad:     "
+#else
+    "ignore",
+#endif
+};
 
 static double	bytes[4] = {
     2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
@@ -306,6 +327,7 @@ main()
     scalar = 3.0;
     for (k=0; k<NTIMES; k++)
 	{
+#if DO_COPY
 	times[0][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Copy();
@@ -315,7 +337,9 @@ main()
 	    c[j] = a[j];
 #endif
 	times[0][k] = mysecond() - times[0][k];
-	
+#endif
+
+#if DO_SCALE
 	times[1][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Scale(scalar);
@@ -325,7 +349,9 @@ main()
 	    b[j] = scalar*c[j];
 #endif
 	times[1][k] = mysecond() - times[1][k];
-	
+#endif
+
+#if DO_ADD	
 	times[2][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Add();
@@ -335,8 +361,10 @@ main()
 	    c[j] = a[j]+b[j];
 #endif
 	times[2][k] = mysecond() - times[2][k];
+#endif
 	
-	times[3][k] = mysecond();
+#if DO_TRIAD
+    times[3][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Triad(scalar);
 #else
@@ -345,6 +373,7 @@ main()
 	    a[j] = b[j]+scalar*c[j];
 #endif
 	times[3][k] = mysecond() - times[3][k];
+#endif
 	}
 
     /*	--- SUMMARY --- */
@@ -363,11 +392,13 @@ main()
     for (j=0; j<4; j++) {
 		avgtime[j] = avgtime[j]/(double)(NTIMES-1);
 
-		printf("%s%12.1f  %11.6f  %11.6f  %11.6f\n", label[j],
-	       1.0E-06 * bytes[j]/mintime[j],
-	       avgtime[j],
-	       mintime[j],
-	       maxtime[j]);
+        if (label[j][0] != 'i') {
+		    printf("%s%12.1f  %11.6f  %11.6f  %11.6f\n", label[j],
+	               1.0E-06 * bytes[j]/mintime[j],
+         	       avgtime[j],
+	               mintime[j],
+	               maxtime[j]);
+        }
     }
     printf(HLINE);
 
@@ -449,10 +480,18 @@ void checkSTREAMresults ()
 	scalar = 3.0;
 	for (k=0; k<NTIMES; k++)
         {
+#if DO_COPY
             cj = aj;
+#endif
+#if DO_SCALE
             bj = scalar*cj;
+#endif
+#if DO_ADD
             cj = aj+bj;
+#endif
+#if DO_TRIAD
             aj = bj+scalar*cj;
+#endif
         }
 
     /* accumulate deltas between observed and expected results */
