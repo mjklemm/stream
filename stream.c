@@ -327,20 +327,18 @@ int main(int argc, char * argv[]) {
     double readset;
     double writeset;
     writeset = 1 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
-#if DO_COPY
     readset = 1 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
+#if DO_COPY
     printf("Copy:  %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
 #endif
 #if DO_SCALE
-    readset = 2 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
     printf("Scale: %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
 #endif
-#if DO_ADD
     readset = 2 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
+#if DO_ADD
     printf("Add:   %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
 #endif
 #if DO_TRIAD
-    readset = 2 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
     printf("Triad: %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
 #endif
 
