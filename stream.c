@@ -489,7 +489,7 @@ void checkSTREAMresults (void) {
 
     /* a[] is modified during timing check */
     aj = 2.0E0 * aj;
-    
+
     /* now execute timing loop */
     scalar = 3.0;
     for (k=0; k<NTIMES; k++) {
