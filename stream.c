@@ -322,6 +322,29 @@ main()
     printf("precision of your system timer.\n");
     printf(HLINE);
 
+    long gb = 1024 * 1024 * 1024;
+    double readset;
+    double writeset;
+    writeset = 1 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
+#if DO_COPY
+    readset = 1 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
+    printf("Copy:  %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
+#endif
+#if DO_SCALE
+    readset = 2 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
+    printf("Scale: %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
+#endif
+#if DO_ADD
+    readset = 2 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
+    printf("Add:   %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
+#endif
+#if DO_TRIAD
+    readset = 2 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
+    printf("Triad: %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
+#endif
+
+    printf(HLINE);
+
     /*  --- MAIN LOOP --- repeat test cases NTIMES times --- */
 
     scalar = 3.0;
