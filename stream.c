@@ -216,6 +216,10 @@ static double   bytes[4] = {
 
 extern double mysecond();
 extern void checkSTREAMresults();
+extern void STREAM_Copy();
+extern void STREAM_Scale(STREAM_TYPE scalar);
+extern void STREAM_Add();
+extern void STREAM_Triad(STREAM_TYPE scalar);
 #ifdef TUNED
 extern void tuned_STREAM_Copy();
 extern void tuned_STREAM_Scale(STREAM_TYPE scalar);
@@ -353,9 +357,7 @@ int main(int argc, char * argv[]) {
 #ifdef TUNED
         tuned_STREAM_Copy();
 #else
-#pragma omp parallel for
-        for (j=0; j<STREAM_ARRAY_SIZE; j++)
-            c[j] = a[j];
+        STREAM_Copy();
 #endif
         times[0][k] = mysecond() - times[0][k];
 #endif
@@ -365,9 +367,7 @@ int main(int argc, char * argv[]) {
 #ifdef TUNED
         tuned_STREAM_Scale(scalar);
 #else
-#pragma omp parallel for
-        for (j=0; j<STREAM_ARRAY_SIZE; j++)
-            b[j] = scalar*c[j];
+        STREAM_Scale(scalar);
 #endif
         times[1][k] = mysecond() - times[1][k];
 #endif
@@ -377,9 +377,7 @@ int main(int argc, char * argv[]) {
 #ifdef TUNED
         tuned_STREAM_Add();
 #else
-#pragma omp parallel for
-        for (j=0; j<STREAM_ARRAY_SIZE; j++)
-            c[j] = a[j]+b[j];
+        STREAM_Add();
 #endif
         times[2][k] = mysecond() - times[2][k];
 #endif
@@ -389,9 +387,7 @@ int main(int argc, char * argv[]) {
 #ifdef TUNED
         tuned_STREAM_Triad(scalar);
 #else
-#pragma omp parallel for
-        for (j=0; j<STREAM_ARRAY_SIZE; j++)
-            a[j] = b[j]+scalar*c[j];
+        STREAM_Triad(scalar);
 #endif
         times[3][k] = mysecond() - times[3][k];
 #endif
@@ -598,34 +594,59 @@ void checkSTREAMresults (void) {
 #endif
 }
 
-#ifdef TUNED
 /* stubs for "tuned" versions of the kernels */
-void tuned_STREAM_Copy()
-{
+void STREAM_Copy() {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         c[j] = a[j];
 }
 
-void tuned_STREAM_Scale(STREAM_TYPE scalar)
-{
+void STREAM_Scale(STREAM_TYPE scalar) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         b[j] = scalar*c[j];
 }
 
-void tuned_STREAM_Add()
-{
+void STREAM_Add() {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         c[j] = a[j]+b[j];
 }
 
-void tuned_STREAM_Triad(STREAM_TYPE scalar)
-{
+void STREAM_Triad(STREAM_TYPE scalar) {
+    ssize_t j;
+#pragma omp parallel for
+    for (j=0; j<STREAM_ARRAY_SIZE; j++)
+        a[j] = b[j]+scalar*c[j];
+}
+
+#ifdef TUNED
+/* stubs for "tuned" versions of the kernels */
+void tuned_STREAM_Copy() {
+    ssize_t j;
+#pragma omp parallel for
+    for (j=0; j<STREAM_ARRAY_SIZE; j++)
+        c[j] = a[j];
+}
+
+void tuned_STREAM_Scale(STREAM_TYPE scalar) {
+    ssize_t j;
+#pragma omp parallel for
+    for (j=0; j<STREAM_ARRAY_SIZE; j++)
+        b[j] = scalar*c[j];
+}
+
+void tuned_STREAM_Add() {
+    ssize_t j;
+#pragma omp parallel for
+    for (j=0; j<STREAM_ARRAY_SIZE; j++)
+        c[j] = a[j]+b[j];
+}
+
+void tuned_STREAM_Triad(STREAM_TYPE scalar) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
