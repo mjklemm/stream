@@ -40,11 +40,16 @@ stream.gpu-mi50: Makefile stream.c
 stream.gpu-mi100: Makefile stream.c
 	clang $(DEBUG) -O3 $(TYPES) -DGPU_STREAM=1 -DGPU_DATA_ENV=1 -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908 -o stream.gpu-mi100 stream.c
 
+stream.gpu-v100: Makefile stream.c
+	#clang $(DEBUG) -O3 $(TYPES) -DGPU_STREAM=1 -DGPU_DATA_ENV=1 -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70 -o stream.gpu-v100 stream.c
+	nvc $(DEBUG) -O3 $(TYPES) -DGPU_STREAM=1 -DGPU_DATA_ENV=1 -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mp=gpu -gpu=cc70 -o stream.gpu-v100 stream.c
+
 clean:
 	rm -f *.o
 	rm -f stream.clang-nts stream.clang
 	rm -f stream.icc-nts stream.icc
 	rm -f stream.gpu-mi50 stream.gpu-mi100
+	rm -f stream.gpu-v100 stream.gpu-a100
 
 realclean: clean
 	rm -f *.bak *~
