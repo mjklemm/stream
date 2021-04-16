@@ -23,10 +23,10 @@ stream_c.exe: stream.c
 	$(CC) $(CFLAGS) stream.c -o stream_c.exe
 
 stream.icc-nts: Makefile stream.c
-	icc $(DEBUG) -fno-alias -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -qopt-streaming-stores always -o stream.icc-nts stream.c
+	icc $(DEBUG) -fno-alias -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -shared-intel -fopenmp -ffreestanding -qopt-streaming-stores always -o stream.icc-nts stream.c
 
 stream.icc: Makefile stream.c
-	icc $(DEBUG) -fno-alias -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -o stream.icc stream.c
+	icc $(DEBUG) -fno-alias -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -shared-intel -fopenmp -ffreestanding -o stream.icc stream.c
 
 stream.clang-nts: Makefile stream.c
 	clang $(DEBUG) -O3 -mavx2 -mcmodel=medium $(TYPES) -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -ffp-contract=fast -march=znver2 -fno-unroll-loops -fopenmp -fnt-store -o stream.clang-nts stream.c
@@ -35,10 +35,10 @@ stream.clang: Makefile stream.c
 	clang $(DEBUG) -O3 -mavx2 -mcmodel=medium $(TYPES) -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -ffp-contract=fast -march=znver2 -fno-unroll-loops -fopenmp -o stream.clang stream.c
 
 stream.gpu-mi50: Makefile stream.c
-	clang $(DEBUG) -O3 $(TYPES) -DGPU_STREAM=1 -DGPU_DATA_ENV=1 -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx906 -o stream.gpu-mi50 stream.c
+	clang $(DEBUG) -O3 $(TYPES) -DGPU_STREAM=1 -DGPU_DATA_ENV=1 -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx906 -o stream.gpu-mi50 stream.c
 
 stream.gpu-mi100: Makefile stream.c
-	clang $(DEBUG) -O3 $(TYPES) -DGPU_STREAM=1 -DGPU_DATA_ENV=1 -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908 -o stream.gpu-mi100 stream.c
+	clang $(DEBUG) -O3 $(TYPES) -DGPU_STREAM=1 -DGPU_DATA_ENV=1 -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908 -o stream.gpu-mi100 stream.c
 
 clean:
 	rm -f *.o
