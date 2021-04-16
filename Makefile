@@ -22,10 +22,10 @@ stream_c.exe: stream.c
 
 
 stream.icc-nts: Makefile stream.c
-	icc $(DEBUG) -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -qopt-streaming-stores always -o stream.icc-nts stream.c
+	icc $(DEBUG) -fno-alias -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -qopt-streaming-stores always -o stream.icc-nts stream.c
 
 stream.icc: Makefile stream.c
-	icc $(DEBUG) -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -o stream.icc stream.c
+	icc $(DEBUG) -fno-alias -Ofast $(TYPES) -DSTATIC -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -mcmodel=large -shared-intel -fopenmp -ffreestanding -o stream.icc stream.c
 
 stream.clang-nts: Makefile stream.c
 	clang $(DEBUG) -O3 -mavx2 -mcmodel=medium $(TYPES) -DSTREAM_TYPE=double -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE) -DNTIMES=$(NTIMES) -ffp-contract=fast -march=znver2 -fno-unroll-loops -fopenmp -fnt-store -o stream.clang-nts stream.c
