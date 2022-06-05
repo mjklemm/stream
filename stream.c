@@ -307,7 +307,12 @@ int main(int argc, char * argv[]) {
 #endif
 
     /* Get initial value for system clock. */
+#if PARALLEL_INIT
+    printf("Parallel initialization...\n");
 #pragma omp parallel for
+#else
+    printf("Sequential initialization...\n");
+#endif
     for (j=0; j<STREAM_ARRAY_SIZE; j++) {
         a[j] = 1.0;
         b[j] = 2.0;
