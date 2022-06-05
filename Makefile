@@ -7,9 +7,14 @@ STREAM_ARRAY_SIZE=250000000
 
 NTIMES=10
 
+COPY=1
+ADD=1
+SCALE=0
+TRIAD=1
+
 DEBUG=-g
 
-TYPES=-DDO_COPY=1 -DDO_ADD=1 -DDO_SCALE=1 -DDO_TRIAD=1
+TYPES=-DDO_COPY=$(COPY) -DDO_ADD=$(ADD) -DDO_SCALE=$(SCALE) -DDO_TRIAD=$(TRIAD)
 
 all:
 	@echo Please, pick on the of the available stream targets.
