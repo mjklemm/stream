@@ -4,10 +4,10 @@ COMPILER := amd
 
 ifeq ($(COMPILER), amd)
 	FC=amdflang
-	FFLAGS=$(DEBUG)
+	FFLAGS=$(DEBUG) -O3
 
 	CC=amdclang
-	CFLAGS=$(DEBUG)
+	CFLAGS=$(DEBUG) -O3
 endif
 
 STREAM_TYPE=double
