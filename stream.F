@@ -310,8 +310,8 @@ C     ..
  9020 FORMAT (1x,a,i4,a)
  9030 FORMAT (1x,a,i3,a,a)
  9040 FORMAT (1x,'Function',5x,
-     $ 'Rate (MB/s)  Avg time   Min time  Max time')
- 9050 FORMAT (1x,a,4 (f10.4,2x))
+     $ 'Rate (MB/s)       Avg time       Min time       Max time')
+ 9050 FORMAT (1x,a,4 (f13.4,2x))
 
       END PROGRAM stream
 
