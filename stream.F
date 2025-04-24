@@ -165,7 +165,7 @@ C     ..
       nbpw = realsize
 
       PRINT *,'----------------------------------------------'
-      PRINT *,'STREAM Version $Revision: 5.6 $'
+      PRINT *,'STREAM (Fortran) Version $Revision: 5.6 $'
       PRINT *,'----------------------------------------------'
       WRITE (*,FMT=9010) 'Array size = ',n
       WRITE (*,FMT=9010) 'Offset     = ',offset

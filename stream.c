@@ -256,7 +256,7 @@ int main(int argc, char * argv[]) {
     /* --- SETUP --- determine precision and check timing --- */
 
     printf(HLINE);
-    printf("STREAM version $Revision: 5.10 $\n");
+    printf("STREAM (C) version $Revision: 5.10 $\n");
     printf(HLINE);
     BytesPerWord = sizeof(STREAM_TYPE);
     printf("This system uses %d bytes per array element.\n",
