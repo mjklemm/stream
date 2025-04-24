@@ -27,6 +27,20 @@ ifeq ($(COMPILER), amd)
 	endif
 endif
 
+ifeq ($(COMPILER), intel)
+	FC=ifx
+	FFLAGS=-O3 -mavx2 -qopt-streaming-stores=always
+	FLDFLAGS=
+
+	CC=icx
+	CFLAGS=-O3 -mavx2 -qopt-streaming-stores=always
+	CLDFLAGS=
+
+	ifeq ($(OPENPMP), 1)
+		FOPENMP=-fiopenmp
+	endif
+endif
+
 CDEFINES=-DSTREAM_TYPE=$(STREAM_TYPE_C)
 FDEFINES='-DSTREAM_TYPE=$(STREAM_TYPE_F)'
 
