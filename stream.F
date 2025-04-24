@@ -178,10 +178,10 @@ C     ..
       WRITE (*,FMT=9030) '*EXCLUDING* the first and last iterations'
 
 !$OMP PARALLEL
-!$OMP MASTER
+!$OMP MASKED FILTER(0)
       PRINT *,'----------------------------------------------'
 !$    PRINT *,'Number of Threads = ',OMP_GET_NUM_THREADS()
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP END PARALLEL
 
       PRINT *,'----------------------------------------------'
@@ -189,7 +189,13 @@ C     ..
       PRINT *,'Printing one line per active thread....'
 !$OMP END PARALLEL
 
+      PRINT *,'----------------------------------------------'
+#if PARALLEL_INIT
+      PRINT *, 'Parallel initialization'
 !$OMP PARALLEL DO
+#else
+      PRINT *, 'Sequential initialization'
+#endif
       DO 10 j = 1,n
           a(j) = 2.0d0
           b(j) = 0.5D0
