@@ -28,11 +28,11 @@ DEFINES=-DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE)
 DEFINES+=-DDO_COPY=$(COPY) -DDO_ADD=$(ADD) -DDO_SCALE=$(SCALE) -DDO_TRIAD=$(TRIAD)
 DEFINES+=-DPARALLEL_INIT=$(PARALLEL_INIT)
 
-all:
-	@echo Please, pick on the of the available stream targets.
+dummy:
+	@echo "Please, pick one the of the available stream targets:"
+	@echo "all, stream_c, stream_f"
 
-stream_f.exe: stream.f mysecond.o
-	$(CC) $(CFLAGS) -c mysecond.c
+all: stream_f stream_c
 
 stream_f.o: stream.F
 	$(FC) $(FOPENMP) $(FFLAGS) $(FDEFINES) $(DEFINES) -o stream_f.o -c stream.F
