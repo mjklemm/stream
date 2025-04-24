@@ -56,18 +56,20 @@ all: stream_f stream_c
 
 stream_f.o: stream.F
 	$(FC) $(FOPENMP) $(FFLAGS) $(FDEFINES) $(DEFINES) -o stream_f.o -c stream.F
+	$(FC) $(FOPENMP) $(FFLAGS) $(FDEFINES) $(DEFINES) -o stream_f.s -S stream.F
 
 stream_f: stream_f.o mysecond.o
 	$(FC) $(FOPENMP) $(FLDFLAGS) stream_f.o mysecond.o -o stream_f
 
 stream_c.o: stream.c
 	$(CC) $(FOPENMP) $(CFLAGS) $(CDEFINES) $(DEFINES) -o stream_c.o -c stream.c
+	$(CC) $(FOPENMP) $(CFLAGS) $(CDEFINES) $(DEFINES) -o stream_c.s -S stream.c
 
 stream_c: stream_c.o
 	$(CC) $(FOPENMP) $(CLDFLAGS) -o stream_c stream_c.o
 
 clean:
-	rm -f *.o
+	rm -f *.o *.s
 	rm -f stream_c stream_f
 
 realclean: clean
