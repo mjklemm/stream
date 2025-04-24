@@ -2,7 +2,7 @@
 *~
 *.swp
 
-stream.clang
-stream.clang-nts
-stream.icc-nts
-stream.icc
+*.o
+
+stream_f
+stream_c
