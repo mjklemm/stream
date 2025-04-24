@@ -22,7 +22,7 @@ ifeq ($(COMPILER), amd)
 	CFLAGS=-O3 -mavx2 -fnt-store=aggressive
 	CLDFLAGS=
 
-	ifeq ($(OPENPMP), 1)
+	ifeq ($(OPENMP), 1)
 		FOPENMP=-fopenmp
 	endif
 endif
@@ -36,7 +36,7 @@ ifeq ($(COMPILER), intel)
 	CFLAGS=-O3 -mavx2 -qopt-streaming-stores=always
 	CLDFLAGS=
 
-	ifeq ($(OPENPMP), 1)
+	ifeq ($(OPENMP), 1)
 		FOPENMP=-fiopenmp
 	endif
 endif
@@ -53,6 +53,9 @@ dummy:
 	@echo "all, stream_c, stream_f"
 
 all: stream_f stream_c
+
+mysecond.o: mysecond.c
+	$(CC) -c mysecond.c
 
 stream_f.o: stream.F
 	$(FC) $(FOPENMP) $(FFLAGS) $(FDEFINES) $(DEFINES) -o stream_f.o -c stream.F
