@@ -10,8 +10,9 @@ ifeq ($(COMPILER), amd)
 	CFLAGS=$(DEBUG) -O3
 endif
 
-STREAM_TYPE=double
-STREAM_ARRAY_SIZE=250000000
+STREAM_TYPE_C=double
+STREAM_TYPE_F=real(kind=8)
+STREAM_ARRAY_SIZE=2500000
 TYPES=-DDO_COPY=1 -DDO_ADD=1 -DDO_SCALE=1 -DDO_TRIAD=1
 NTIMES=10
 PARALLEL_INIT=1
@@ -20,7 +21,10 @@ ADD=1
 SCALE=1
 TRIAD=1
 
-DEFINES=-DSTREAM_TYPE=$(STREAM_TYPE) -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE)
+CDEFINES=-DSTREAM_TYPE=$(STREAM_TYPE_C)
+FDEFINES='-DSTREAM_TYPE=$(STREAM_TYPE_F)'
+
+DEFINES=-DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE)
 DEFINES+=-DDO_COPY=$(COPY) -DDO_ADD=$(ADD) -DDO_SCALE=$(SCALE) -DDO_TRIAD=$(TRIAD)
 DEFINES+=-DPARALLEL_INIT=$(PARALLEL_INIT)
 
@@ -31,13 +35,13 @@ stream_f.exe: stream.f mysecond.o
 	$(CC) $(CFLAGS) -c mysecond.c
 
 stream_f.o: stream.F
-	$(FC) $(FOPENMP) $(FFLAGS) $(DEFINES) -o stream_f.o -c stream.F
+	$(FC) $(FOPENMP) $(FFLAGS) $(FDEFINES) $(DEFINES) -o stream_f.o -c stream.F
 
 stream_f: stream_f.o mysecond.o
 	$(FC) $(FOPENMP) $(FFLAGS) stream_f.o mysecond.o -o stream_f
 
 stream_c.o: stream.c
-	$(CC) $(FOPENMP) $(CFLAGS) $(DEFINES) -o stream_c.o -c stream.c
+	$(CC) $(FOPENMP) $(CFLAGS) $(CDEFINES) $(DEFINES) -o stream_c.o -c stream.c
 
 stream_c: stream_c.o
 	$(CC) $(FOPENMP) $(CFLAGS) -o stream_c stream_c.o

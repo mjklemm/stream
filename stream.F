@@ -25,7 +25,7 @@
 *         accordance with the STREAM Run Rules must be clearly
 *         labelled whenever they are published.  Examples of
 *         proper labelling include:
-*         "tuned STREAM benchmark results" 
+*         "tuned STREAM benchmark results"
 *         "based on a variant of the STREAM benchmark code"
 *         Other comparable, clear and reasonable labelling is
 *         acceptable.
@@ -48,7 +48,7 @@
 * Most of the content is currently hosted at:
 *          http://www.cs.virginia.edu/stream/
 *
-* BRIEF INSTRUCTIONS: 
+* BRIEF INSTRUCTIONS:
 *       0) See http://www.cs.virginia.edu/stream/ref.html for details
 *       1) STREAM requires a timing function called mysecond().
 *          Several examples are provided in this directory.
@@ -64,7 +64,7 @@
 *          that makes each array 4x larger than the last-level cache.
 *          The intent is to determine the *best* sustainable bandwidth
 *          available with this simple coding.  Of course, lower values
-*          are usually fairly easy to obtain on cached machines, but 
+*          are usually fairly easy to obtain on cached machines, but
 *          by keeping the test to the *best* results, the answers are
 *          easier to interpret.
 *          You may put the arrays in common or not, at your discretion.
@@ -90,11 +90,34 @@
 *   Dr. Bandwidth
 *=========================================================================
 *
+
+#ifndef STREAM_ARRAY_SIZE
+#   define STREAM_ARRAY_SIZE    10000000
+#endif
+
+#ifdef NTIMES
+#if NTIMES<=1
+#   define NTIMES   10
+#endif
+#endif
+#ifndef NTIMES
+#   define NTIMES   10
+#endif
+
+#ifndef OFFSET
+#   define OFFSET   0
+#endif
+
+#ifndef STREAM_TYPE
+#define STREAM_TYPE double
+#endif
+
       PROGRAM stream
 *     IMPLICIT NONE
 C     .. Parameters ..
       INTEGER n,offset,ndim,ntimes
-      PARAMETER (n=2000000,offset=0,ndim=n+offset,ntimes=10)
+      PARAMETER (n=STREAM_ARRAY_SIZE,offset=OFFSET)
+      PARAMETER (ndim=n+offset,ntimes=NTIMES)
 C     ..
 C     .. Local Scalars ..
       DOUBLE PRECISION scalar,t
@@ -105,11 +128,12 @@ C     .. Local Arrays ..
      $                 times(4,ntimes)
       INTEGER bytes(4)
       CHARACTER label(4)*11
+      INTEGER enabled(4)
 C     ..
 C     .. External Functions ..
       DOUBLE PRECISION mysecond
       INTEGER checktick,realsize
-      EXTERNAL mysecond,checktick,realsize
+      EXTERNAL mysecond,checktick
 !$    INTEGER omp_get_num_threads
 !$    EXTERNAL omp_get_num_threads
 C     ..
@@ -118,7 +142,7 @@ C
       INTRINSIC dble,max,min,nint,sqrt
 C     ..
 C     .. Arrays in Common ..
-      DOUBLE PRECISION a(ndim),b(ndim),c(ndim)
+      STREAM_TYPE a(ndim),b(ndim),c(ndim)
 C     ..
 C     .. Common blocks ..
 *     COMMON a,b,c
@@ -128,11 +152,17 @@ C     .. Data statements ..
       DATA label/'Copy:      ','Scale:     ','Add:       ',
      $     'Triad:     '/
       DATA bytes/2,2,3,3/
+      DATA enabled/DO_COPY,DO_SCALE,DO_ADD,DO_TRIAD/
 C     ..
-
+C     Helper stuff
+C     ..
+      INTEGER, PARAMETER :: gb = 1024 * 1024 * 1024;
+      STREAM_TYPE :: dummy
+      REAL(KIND=8) :: readset, writeset
 *       --- SETUP --- determine precision and check timing ---
 
-      nbpw = realsize()
+      realsize = sizeof(dummy)
+      nbpw = realsize
 
       PRINT *,'----------------------------------------------'
       PRINT *,'STREAM Version $Revision: 5.6 $'
@@ -175,12 +205,34 @@ C     ..
       WRITE (*,FMT=9000)
      $  'Your clock granularity/precision appears to be ',quantum,
      $  ' microseconds'
+
+      PRINT *,'----------------------------------------------------'
+      readset = 1_8 * (REAL(STREAM_ARRAY_SIZE, 8) / REAL(gb, 8))
+     $  * realsize
+      writeset = 1_8 * (REAL(STREAM_ARRAY_SIZE, 8) / REAL(gb, 8))
+     $  * realsize
+#if DO_COPY
+      WRITE (*, FMT=9005) readset, writeset, readset + writeset
+#endif
+#if DO_SCALE
+      WRITE (*, FMT=9006) readset, writeset, readset + writeset
+#endif
+      readset = 2_8 * (REAL(STREAM_ARRAY_SIZE, 8) / REAL(gb, 8))
+     $  * realsize
+#if DO_ADD
+      WRITE (*, FMT=9007) readset, writeset, readset + writeset
+#endif
+#if DO_TRIAD
+      WRITE (*, FMT=9008) readset, writeset, readset + writeset
+#endif
+
       PRINT *,'----------------------------------------------------'
 
 *       --- MAIN LOOP --- repeat test cases NTIMES times ---
       scalar = 0.5d0*a(1)
       DO 70 k = 1,ntimes
 
+#if DO_ADD
           t = mysecond()
           a(1) = a(1) + t
 !$OMP PARALLEL DO
@@ -190,7 +242,9 @@ C     ..
           t = mysecond() - t
           c(n) = c(n) + t
           times(1,k) = t
+#endif
 
+#if DO_SCALE
           t = mysecond()
           c(1) = c(1) + t
 !$OMP PARALLEL DO
@@ -200,7 +254,9 @@ C     ..
           t = mysecond() - t
           b(n) = b(n) + t
           times(2,k) = t
+#endif
 
+#if DO_ADD
           t = mysecond()
           a(1) = a(1) + t
 !$OMP PARALLEL DO
@@ -210,7 +266,9 @@ C     ..
           t = mysecond() - t
           c(n) = c(n) + t
           times(3,k) = t
+#endif
 
+#if DO_TRIAD
           t = mysecond()
           b(1) = b(1) + t
 !$OMP PARALLEL DO
@@ -220,6 +278,7 @@ C     ..
           t = mysecond() - t
           a(n) = a(n) + t
           times(4,k) = t
+#endif
    70 CONTINUE
 
 *       --- SUMMARY ---
@@ -232,21 +291,32 @@ C     ..
    90 CONTINUE
       WRITE (*,FMT=9040)
       DO 100 j = 1,4
-          avgtime(j) = avgtime(j)/dble(ntimes-1)
-          WRITE (*,FMT=9050) label(j),n*bytes(j)*nbpw/mintime(j)/1.0D6,
-     $      avgtime(j),mintime(j),maxtime(j)
+          IF (enabled(j).NE.0) then
+              avgtime(j) = avgtime(j)/dble(ntimes-1)
+              WRITE (*,FMT=9050) label(j),n*bytes(j)*nbpw/mintime(j)/
+     $          1.0D6,
+     $          avgtime(j),mintime(j),maxtime(j)
+          END IF
   100 CONTINUE
       PRINT *,'----------------------------------------------------'
       CALL checksums (a,b,c,n,ntimes)
       PRINT *,'----------------------------------------------------'
 
  9000 FORMAT (1x,a,i6,a)
+ 9005 FORMAT (1x,'Copy:  ',f10.4,' GB read set, ',f10.4,
+     $ ' GB write set', f10.4, ' GB total working set')
+ 9006 FORMAT (1x,'Scale: ',f10.4,' GB read set, ',f10.4,
+     $ ' GB write set', f10.4, ' GB total working set')
+ 9007 FORMAT (1x,'Add:   ',f10.4,' GB read set, ',f10.4,
+     $ ' GB write set', f10.4, ' GB total working set')
+ 9008 FORMAT (1x,'Triad: ',f10.4,' GB read set, ',f10.4,
+     $ ' GB write set', f10.4, ' GB total working set')
  9010 FORMAT (1x,a,i10)
  9020 FORMAT (1x,a,i4,a)
  9030 FORMAT (1x,a,i3,a,a)
- 9040 FORMAT ('Function',5x,'Rate (MB/s)  Avg time   Min time  Max time'
-     $       )
- 9050 FORMAT (a,4 (f10.4,2x))
+ 9040 FORMAT (1x,'Function',5x,
+     $ 'Rate (MB/s)  Avg time   Min time  Max time')
+ 9050 FORMAT (1x,a,4 (f10.4,2x))
       END
 
 *-------------------------------------
@@ -257,71 +327,6 @@ C     ..
 * Here used to guess how many bytes of storage a DOUBLE PRECISION
 * number occupies.
 *
-      INTEGER FUNCTION realsize()
-*     IMPLICIT NONE
-
-C     .. Local Scalars ..
-      DOUBLE PRECISION result,test
-      INTEGER j,ndigits
-C     ..
-C     .. Local Arrays ..
-      DOUBLE PRECISION ref(30)
-C     ..
-C     .. External Subroutines ..
-      EXTERNAL confuse
-C     ..
-C     .. Intrinsic Functions ..
-      INTRINSIC abs,acos,log10,sqrt
-C     ..
-
-C       Test #1 - compare single(1.0d0+delta) to 1.0d0
-
-   10 DO 20 j = 1,30
-          ref(j) = 1.0d0 + 10.0d0** (-j)
-   20 CONTINUE
-
-      DO 30 j = 1,30
-          test = ref(j)
-          ndigits = j
-          CALL confuse(test,result)
-          IF (test.EQ.1.0D0) THEN
-              GO TO 40
-          END IF
-   30 CONTINUE
-      GO TO 50
-
-   40 WRITE (*,FMT='(a)')
-     $  '----------------------------------------------'
-      WRITE (*,FMT='(1x,a,i2,a)') 'Double precision appears to have ',
-     $  ndigits,' digits of accuracy'
-      IF (ndigits.LE.8) THEN
-          realsize = 4
-      ELSE
-          realsize = 8
-      END IF
-      WRITE (*,FMT='(1x,a,i1,a)') 'Assuming ',realsize,
-     $  ' bytes per DOUBLE PRECISION word'
-      WRITE (*,FMT='(a)')
-     $  '----------------------------------------------'
-      RETURN
-
-   50 PRINT *,'Hmmmm.  I am unable to determine the size.'
-      PRINT *,'Please enter the number of Bytes per DOUBLE PRECISION',
-     $  ' number : '
-      READ (*,FMT=*) realsize
-      IF (realsize.NE.4 .AND. realsize.NE.8) THEN
-          PRINT *,'Your answer ',realsize,' does not make sense.'
-          PRINT *,'Try again.'
-          PRINT *,'Please enter the number of Bytes per ',
-     $      'DOUBLE PRECISION number : '
-          READ (*,FMT=*) realsize
-      END IF
-      PRINT *,'You have manually entered a size of ',realsize,
-     $  ' bytes per DOUBLE PRECISION number'
-      WRITE (*,FMT='(a)')
-     $  '----------------------------------------------'
-      END
-
       SUBROUTINE confuse(q,r)
 *     IMPLICIT NONE
 C     .. Scalar Arguments ..
@@ -399,7 +404,7 @@ C     ..
 *     IMPLICIT NONE
 C     ..
 C     .. Arguments ..
-      DOUBLE PRECISION a(*),b(*),c(*)
+      STREAM_TYPE a(*),b(*),c(*)
       INTEGER n,ntimes
 C     ..
 C     .. Local Scalars ..
@@ -417,10 +422,18 @@ C     iterations have been executed correctly.
       aa = 0.5D0*aa
       scalar = 0.5d0*aa
       DO k = 1,ntimes
+#if DO_COPY
           cc = aa
+#endif
+#if DO_SCALE
           bb = scalar*cc
+#endif
+#if DO_ADD
           cc = aa + bb
+#endif
+#if DO_TRIAD
           aa = bb + scalar*cc
+#endif
       END DO
       aa = aa*DBLE(n-2)
       bb = bb*DBLE(n-2)
