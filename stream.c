@@ -41,6 +41,7 @@
 /*  5. Absolutely no warranty is expressed or implied.                   */
 /*-----------------------------------------------------------------------*/
 # include <stdio.h>
+# include <stdlib.h>
 # include <unistd.h>
 # include <math.h>
 # include <float.h>
@@ -177,10 +178,6 @@
 #define STREAM_TYPE double
 #endif
 
-static STREAM_TYPE  a[STREAM_ARRAY_SIZE+OFFSET],
-            b[STREAM_ARRAY_SIZE+OFFSET],
-            c[STREAM_ARRAY_SIZE+OFFSET];
-
 static double   avgtime[4] = {0}, maxtime[4] = {0},
         mintime[4] = {FLT_MAX,FLT_MAX,FLT_MAX,FLT_MAX};
 
@@ -215,17 +212,27 @@ static double   bytes[4] = {
 };
 
 extern double mysecond();
-extern void checkSTREAMresults();
-extern void STREAM_Copy();
-extern void STREAM_Scale(STREAM_TYPE scalar);
-extern void STREAM_Add();
-extern void STREAM_Triad(STREAM_TYPE scalar);
-#ifdef TUNED
-extern void tuned_STREAM_Copy();
-extern void tuned_STREAM_Scale(STREAM_TYPE scalar);
-extern void tuned_STREAM_Add();
-extern void tuned_STREAM_Triad(STREAM_TYPE scalar);
+extern void checkSTREAMresults(STREAM_TYPE * a, STREAM_TYPE * b, STREAM_TYPE * c);
+
+extern void STREAM_Copy(STREAM_TYPE * c, STREAM_TYPE * a);
+extern void STREAM_Scale(STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar);
+extern void STREAM_Add(STREAM_TYPE * c, STREAM_TYPE * a, STREAM_TYPE * b);
+extern void STREAM_Triad(STREAM_TYPE * a, STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar);
+
+#if GPU_STREAM
+extern void STREAM_Copy_GPU(STREAM_TYPE * c, STREAM_TYPE * a);
+extern void STREAM_Scale_GPU(STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar);
+extern void STREAM_Add_GPU(STREAM_TYPE * c, STREAM_TYPE * a, STREAM_TYPE * b);
+extern void STREAM_Triad_GPU(STREAM_TYPE * a, STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar);
 #endif
+
+#ifdef TUNED
+extern void tuned_STREAM_Copy(STREAM_TYPE * c, STREAM_TYPE * a);
+extern void tuned_STREAM_Scale(STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar);
+extern void tuned_STREAM_Add(STREAM_TYPE * c, STREAM_TYPE * a, STREAM_TYPE * b);
+extern void tuned_STREAM_Triad(STREAM_TYPE * a, STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar);
+#endif
+
 #ifdef _OPENMP
 extern int omp_get_num_threads();
 #endif
@@ -237,6 +244,14 @@ int main(int argc, char * argv[]) {
     ssize_t     j;
     STREAM_TYPE     scalar;
     double      t, times[4][NTIMES];
+
+    STREAM_TYPE * a;
+    STREAM_TYPE * b;
+    STREAM_TYPE * c;
+
+    a = (STREAM_TYPE *) malloc(sizeof(STREAM_TYPE) * (STREAM_ARRAY_SIZE+OFFSET));
+    b = (STREAM_TYPE *) malloc(sizeof(STREAM_TYPE) * (STREAM_ARRAY_SIZE+OFFSET));
+    c = (STREAM_TYPE *) malloc(sizeof(STREAM_TYPE) * (STREAM_ARRAY_SIZE+OFFSET));
 
     /* --- SETUP --- determine precision and check timing --- */
 
@@ -251,7 +266,7 @@ int main(int argc, char * argv[]) {
 #ifdef N
     printf("*****  WARNING: ******\n");
     printf("      It appears that you set the preprocessor variable N when compiling this code.\n");
-    printf("      This version of the code uses the preprocesor variable STREAM_ARRAY_SIZE to control the array size\n");
+    printf("      This version of the code uses the preprocessor variable STREAM_ARRAY_SIZE to control the array size\n");
     printf("      Reverting to default value of STREAM_ARRAY_SIZE=%llu\n",(unsigned long long) STREAM_ARRAY_SIZE);
     printf("*****  WARNING: ******\n");
 #endif
@@ -267,6 +282,7 @@ int main(int argc, char * argv[]) {
     printf(" The *best* time for each kernel (excluding the first iteration)\n");
     printf(" will be used to compute the reported bandwidth.\n");
 
+#if !GPU_STREAM
 #ifdef _OPENMP
     printf(HLINE);
 #pragma omp parallel
@@ -278,7 +294,9 @@ int main(int argc, char * argv[]) {
         }
     }
 #endif
+#endif
 
+#if !GPU_STREAM
 #ifdef _OPENMP
     k = 0;
 #pragma omp parallel
@@ -286,9 +304,15 @@ int main(int argc, char * argv[]) {
     k++;
     printf ("Number of Threads counted = %i\n",k);
 #endif
+#endif
 
     /* Get initial value for system clock. */
+#if PARALLEL_INIT
+    printf("Parallel initialization...\n");
 #pragma omp parallel for
+#else
+    printf("Sequential initialization...\n");
+#endif
     for (j=0; j<STREAM_ARRAY_SIZE; j++) {
         a[j] = 1.0;
         b[j] = 2.0;
@@ -350,14 +374,25 @@ int main(int argc, char * argv[]) {
 
     /*  --- MAIN LOOP --- repeat test cases NTIMES times --- */
 
+#if GPU_DATA_ENV
+#pragma omp target data map(tofrom:a[0:STREAM_ARRAY_SIZE]) \
+                        map(tofrom:b[0:STREAM_ARRAY_SIZE]) \
+                        map(tofrom:c[0:STREAM_ARRAY_SIZE])
+    {
+#endif
+
     scalar = 3.0;
     for (k=0; k<NTIMES; k++) {
 #if DO_COPY
         times[0][k] = mysecond();
 #ifdef TUNED
-        tuned_STREAM_Copy();
+        tuned_STREAM_Copy(c, a);
 #else
-        STREAM_Copy();
+#if GPU_STREAM
+        STREAM_Copy_GPU(c, a);
+#else
+        STREAM_Copy(c, a);
+#endif
 #endif
         times[0][k] = mysecond() - times[0][k];
 #endif
@@ -365,9 +400,13 @@ int main(int argc, char * argv[]) {
 #if DO_SCALE
         times[1][k] = mysecond();
 #ifdef TUNED
-        tuned_STREAM_Scale(scalar);
+        tuned_STREAM_Scale(b, c, scalar);
 #else
-        STREAM_Scale(scalar);
+#if GPU_STREAM
+        STREAM_Scale_GPU(b, c, scalar);
+#else
+        STREAM_Scale(b, c, scalar);
+#endif
 #endif
         times[1][k] = mysecond() - times[1][k];
 #endif
@@ -375,9 +414,13 @@ int main(int argc, char * argv[]) {
 #if DO_ADD
         times[2][k] = mysecond();
 #ifdef TUNED
-        tuned_STREAM_Add();
+        tuned_STREAM_Add(c, a, b);
 #else
-        STREAM_Add();
+#if GPU_STREAM
+        STREAM_Add_GPU(c, a, b);
+#else
+        STREAM_Add(c, a, b);
+#endif
 #endif
         times[2][k] = mysecond() - times[2][k];
 #endif
@@ -385,13 +428,21 @@ int main(int argc, char * argv[]) {
 #if DO_TRIAD
         times[3][k] = mysecond();
 #ifdef TUNED
-        tuned_STREAM_Triad(scalar);
+        tuned_STREAM_Triad(a, b, c, scalar);
 #else
-        STREAM_Triad(scalar);
+#if GPU_STREAM
+        STREAM_Triad_GPU(a, b, c, scalar);
+#else
+        STREAM_Triad(a, b, c, scalar);
+#endif
 #endif
         times[3][k] = mysecond() - times[3][k];
 #endif
     }
+
+#if GPU_DATA_ENV
+    }
+#endif
 
     /*  --- SUMMARY --- */
 
@@ -416,8 +467,12 @@ int main(int argc, char * argv[]) {
     printf(HLINE);
 
     /* --- Check Results --- */
-    checkSTREAMresults();
+    checkSTREAMresults(a, b, c);
     printf(HLINE);
+
+    free(a);
+    free(b);
+    free(c);
 
     return 0;
 }
@@ -459,16 +514,14 @@ int checktick(void) {
 double mysecond(void) {
     struct timeval tp;
     struct timezone tzp;
-    int i;
-
-    i = gettimeofday(&tp,&tzp);
+    gettimeofday(&tp,&tzp);
     return ( (double) tp.tv_sec + (double) tp.tv_usec * 1.e-6 );
 }
 
 #ifndef abs
 #define abs(a) ((a) >= 0 ? (a) : -(a))
 #endif
-void checkSTREAMresults (void) {
+void checkSTREAMresults (STREAM_TYPE * a, STREAM_TYPE * b, STREAM_TYPE * c) {
     STREAM_TYPE aj,bj,cj,scalar;
     STREAM_TYPE aSumErr,bSumErr,cSumErr;
     STREAM_TYPE aAvgErr,bAvgErr,cAvgErr;
@@ -595,58 +648,92 @@ void checkSTREAMresults (void) {
 }
 
 /* stubs for "tuned" versions of the kernels */
-void STREAM_Copy() {
+void STREAM_Copy(STREAM_TYPE * c, STREAM_TYPE * a) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         c[j] = a[j];
 }
 
-void STREAM_Scale(STREAM_TYPE scalar) {
+void STREAM_Scale(STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         b[j] = scalar*c[j];
 }
 
-void STREAM_Add() {
+void STREAM_Add(STREAM_TYPE * c, STREAM_TYPE * a, STREAM_TYPE * b) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         c[j] = a[j]+b[j];
 }
 
-void STREAM_Triad(STREAM_TYPE scalar) {
+void STREAM_Triad(STREAM_TYPE * a, STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         a[j] = b[j]+scalar*c[j];
 }
 
+#if GPU_STREAM
+void STREAM_Copy_GPU(STREAM_TYPE * c, STREAM_TYPE * a) {
+    ssize_t j;
+#pragma omp target teams distribute parallel for schedule(nonmonotonic:static,1) \
+            map(from:c[0:STREAM_ARRAY_SIZE]) map(to:a[0:STREAM_ARRAY_SIZE])
+    for (j=0; j<STREAM_ARRAY_SIZE; j++)
+        c[j] = a[j];
+}
+
+void STREAM_Scale_GPU(STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar) {
+    ssize_t j;
+#pragma omp target teams distribute parallel for schedule(nonmonotonic:static,1) \
+            map(from:b[0:STREAM_ARRAY_SIZE]) map(to:c[0:STREAM_ARRAY_SIZE])
+    for (j=0; j<STREAM_ARRAY_SIZE; j++)
+        b[j] = scalar*c[j];
+}
+
+void STREAM_Add_GPU(STREAM_TYPE * c, STREAM_TYPE * a, STREAM_TYPE * b) {
+    ssize_t j;
+#pragma omp target teams distribute parallel for schedule(nonmonotonic:static,1) \
+            map(from:c[0:STREAM_ARRAY_SIZE]) map(to:a[0:STREAM_ARRAY_SIZE]) map(to:b[0:STREAM_ARRAY_SIZE])
+    for (j=0; j<STREAM_ARRAY_SIZE; j++)
+        c[j] = a[j]+b[j];
+}
+
+void STREAM_Triad_GPU(STREAM_TYPE * a, STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar) {
+    ssize_t j;
+#pragma omp target teams distribute parallel for schedule(nonmonotonic:static,1) \
+            map(from:a[0:STREAM_ARRAY_SIZE]) map(to:b[0:STREAM_ARRAY_SIZE]) map(to:c[0:STREAM_ARRAY_SIZE])
+    for (j=0; j<STREAM_ARRAY_SIZE; j++)
+        a[j] = b[j]+scalar*c[j];
+}
+#endif
+
 #ifdef TUNED
 /* stubs for "tuned" versions of the kernels */
-void tuned_STREAM_Copy() {
+void tuned_STREAM_Copy(STREAM_TYPE * c, STREAM_TYPE * a) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         c[j] = a[j];
 }
 
-void tuned_STREAM_Scale(STREAM_TYPE scalar) {
+void tuned_STREAM_Scale(STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         b[j] = scalar*c[j];
 }
 
-void tuned_STREAM_Add() {
+void tuned_STREAM_Add(STREAM_TYPE * c, STREAM_TYPE * a, STREAM_TYPE * b) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)
         c[j] = a[j]+b[j];
 }
 
-void tuned_STREAM_Triad(STREAM_TYPE scalar) {
+void tuned_STREAM_Triad(STREAM_TYPE * a, STREAM_TYPE * b, STREAM_TYPE * c, STREAM_TYPE scalar) {
     ssize_t j;
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++)

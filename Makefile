@@ -13,14 +13,21 @@ endif
 STREAM_TYPE=double
 STREAM_ARRAY_SIZE=250000000
 TYPES=-DDO_COPY=1 -DDO_ADD=1 -DDO_SCALE=1 -DDO_TRIAD=1
-# FOPENMP=-fopenmp
 NTIMES=10
+PARALLEL_INIT=1
+COPY=1
+ADD=1
+SCALE=1
+TRIAD=1
 
-DEFINES=$(TYPES) -DSTREAM_TYPE=$(STREAM_TYPE) -DSTREAM_ARRAY_SIZEE=$(STREAM_ARRAY_SIZE)
+DEFINES=-DSTREAM_TYPE=$(STREAM_TYPE) -DSTREAM_ARRAY_SIZE=$(STREAM_ARRAY_SIZE)
+DEFINES+=-DDO_COPY=$(COPY) -DDO_ADD=$(ADD) -DDO_SCALE=$(SCALE) -DDO_TRIAD=$(TRIAD)
+DEFINES+=-DPARALLEL_INIT=$(PARALLEL_INIT)
 
-all: stream_f stream_c
+all:
+	@echo Please, pick on the of the available stream targets.
 
-mysecond.o: mysecond.c
+stream_f.exe: stream.f mysecond.o
 	$(CC) $(CFLAGS) -c mysecond.c
 
 stream_f.o: stream.F
