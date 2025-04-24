@@ -232,13 +232,10 @@ C     ..
       scalar = 0.5d0*a(1)
       DO 70 k = 1,ntimes
 
-#if DO_ADD
+#if DO_COPY
           t = mysecond()
           a(1) = a(1) + t
-!$OMP PARALLEL DO
-          DO 30 j = 1,n
-              c(j) = a(j)
-   30     CONTINUE
+          CALL STREAM_copy(a, b, n)
           t = mysecond() - t
           c(n) = c(n) + t
           times(1,k) = t
@@ -247,10 +244,7 @@ C     ..
 #if DO_SCALE
           t = mysecond()
           c(1) = c(1) + t
-!$OMP PARALLEL DO
-          DO 40 j = 1,n
-              b(j) = scalar*c(j)
-   40     CONTINUE
+          CALL STREAM_scale(a, b, scale, n)
           t = mysecond() - t
           b(n) = b(n) + t
           times(2,k) = t
@@ -259,10 +253,7 @@ C     ..
 #if DO_ADD
           t = mysecond()
           a(1) = a(1) + t
-!$OMP PARALLEL DO
-          DO 50 j = 1,n
-              c(j) = a(j) + b(j)
-   50     CONTINUE
+          CALL STREAM_add(a, b, c, n)
           t = mysecond() - t
           c(n) = c(n) + t
           times(3,k) = t
@@ -271,10 +262,7 @@ C     ..
 #if DO_TRIAD
           t = mysecond()
           b(1) = b(1) + t
-!$OMP PARALLEL DO
-          DO 60 j = 1,n
-              a(j) = b(j) + scalar*c(j)
-   60     CONTINUE
+          CALL STREAM_triad(a, b, c, scale, n)
           t = mysecond() - t
           a(n) = a(n) + t
           times(4,k) = t
@@ -317,7 +305,60 @@ C     ..
  9040 FORMAT (1x,'Function',5x,
      $ 'Rate (MB/s)  Avg time   Min time  Max time')
  9050 FORMAT (1x,a,4 (f10.4,2x))
-      END
+
+      CONTAINS
+#if DO_COPY
+          SUBROUTINE STREAM_copy(a, b, n)
+              IMPLICIT NONE
+              STREAM_TYPE, DIMENSION(*) :: a, b
+              INTEGER :: n
+!$OMP PARALLEL DO
+              DO 30 j = 1,n
+                  c(j) = a(j)
+   30         CONTINUE
+          END SUBROUTINE STREAM_copy
+#endif
+
+#if DO_SCALE
+          SUBROUTINE STREAM_scale(a, b, scale, n)
+              IMPLICIT NONE
+              STREAM_TYPE, DIMENSION(*) :: a, b
+              STREAM_TYPE :: scale
+              INTEGER :: n
+!$OMP PARALLEL DO
+              DO 40 j = 1,n
+                  b(j) = scalar*c(j)
+   40         CONTINUE
+          END SUBROUTINE STREAM_scale
+#endif
+
+#if DO_ADD
+          SUBROUTINE STREAM_add(a, b, c, n)
+              IMPLICIT NONE
+              STREAM_TYPE, DIMENSION(*) :: a, b, c
+              INTEGER :: n
+!$OMP PARALLEL DO
+              DO 50 j = 1,n
+                  c(j) = a(j) + b(j)
+   50         CONTINUE
+          END SUBROUTINE STREAM_add
+#endif
+
+#if DO_TRIAD
+          SUBROUTINE STREAM_triad(a, b, c, scale, n)
+              IMPLICIT NONE
+              STREAM_TYPE, DIMENSION(*) :: a, b, c
+              STREAM_TYPE :: scale
+              INTEGER :: n
+!$OMP PARALLEL DO
+              DO 60 j = 1,n
+                  a(j) = b(j) + scalar*c(j)
+   60        CONTINUE
+          END SUBROUTINE STREAM_triad
+#endif
+
+      END PROGRAM stream
+
 
 *-------------------------------------
 * INTEGER FUNCTION dblesize()
@@ -396,9 +437,6 @@ C     ..
 *   20 CONTINUE
 
       END
-
-
-
 
       SUBROUTINE checksums(a,b,c,n,ntimes)
 *     IMPLICIT NONE
