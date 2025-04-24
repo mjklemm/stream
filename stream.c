@@ -276,8 +276,8 @@ int main(int argc, char * argv[]) {
     BytesPerWord * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024.0),
     BytesPerWord * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024.0/1024.0));
     printf("Total memory required = %.1f MiB (= %.1f GiB).\n",
-    (3.0 * BytesPerWord) * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024.),
-    (3.0 * BytesPerWord) * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024./1024.));
+           (3.0 * BytesPerWord) * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024.),
+           (3.0 * BytesPerWord) * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024./1024.));
     printf("Each kernel will be executed %d times.\n", NTIMES);
     printf(" The *best* time for each kernel (excluding the first iteration)\n");
     printf(" will be used to compute the reported bandwidth.\n");
@@ -357,17 +357,21 @@ int main(int argc, char * argv[]) {
     writeset = 1 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
     readset = 1 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
 #if DO_COPY
-    printf("Copy:  %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
+    printf("Copy:  %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n",
+           readset, writeset, readset + writeset);
 #endif
 #if DO_SCALE
-    printf("Scale: %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
+    printf("Scale: %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n",
+           readset, writeset, readset + writeset);
 #endif
     readset = 2 * (((unsigned long long)STREAM_ARRAY_SIZE) * 8) / (double) gb;
 #if DO_ADD
-    printf("Add:   %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
+    printf("Add:   %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n",
+           readset, writeset, readset + writeset);
 #endif
 #if DO_TRIAD
-    printf("Triad: %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n", readset, writeset, readset + writeset);
+    printf("Triad: %.2lf GB read set, %.2lf GB write set, %.2lf GB total working set\n",
+           readset, writeset, readset + writeset);
 #endif
 
     printf(HLINE);
