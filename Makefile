@@ -41,6 +41,20 @@ ifeq ($(COMPILER), intel)
 	endif
 endif
 
+ifeq ($(COMPILER), intel_legacy)
+	FC=ifort -diag-disable=10441
+	FFLAGS=-O3 -mavx2 -qopt-streaming-stores=always
+	FLDFLAGS=
+
+	CC=icc -diag-disable=10441
+	CFLAGS=-O3 -mavx2 -qopt-streaming-stores=always
+	CLDFLAGS=
+
+	ifeq ($(OPENMP), 1)
+		FOPENMP=-qopenmp
+	endif
+endif
+
 CDEFINES=-DSTREAM_TYPE=$(STREAM_TYPE_C)
 FDEFINES='-DSTREAM_TYPE=$(STREAM_TYPE_F)'
 
