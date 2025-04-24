@@ -120,7 +120,7 @@ C     .. Parameters ..
       PARAMETER (ndim=n+offset,ntimes=NTIMES)
 C     ..
 C     .. Local Scalars ..
-      DOUBLE PRECISION scalar,t
+      DOUBLE PRECISION t
       INTEGER j,k,nbpw,quantum
 C     ..
 C     .. Local Arrays ..
@@ -143,7 +143,7 @@ C
 C     ..
 C     .. Arrays in Common ..
       STREAM_TYPE a(ndim),b(ndim),c(ndim)
-      STREAM_TYPE scale
+      STREAM_TYPE scalar
 C     ..
 C     .. Common blocks ..
 *     COMMON a,b,c
@@ -245,7 +245,7 @@ C     ..
 #if DO_SCALE
           t = mysecond()
           c(1) = c(1) + t
-          CALL STREAM_scale(b, c, scale, n)
+          CALL STREAM_scale(b, c, scalar, n)
           t = mysecond() - t
           b(n) = b(n) + t
           times(2,k) = t
@@ -263,7 +263,7 @@ C     ..
 #if DO_TRIAD
           t = mysecond()
           b(1) = b(1) + t
-          CALL STREAM_triad(a, b, c, scale, n)
+          CALL STREAM_triad(a, b, c, scalar, n)
           t = mysecond() - t
           a(n) = a(n) + t
           times(4,k) = t
