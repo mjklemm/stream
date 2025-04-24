@@ -115,26 +115,26 @@
       PROGRAM stream
       IMPLICIT NONE
 C     .. Parameters ..
-      INTEGER n,offset,ndim,ntimes
+      INTEGER(8) n,offset,ndim,ntimes
       PARAMETER (n=STREAM_ARRAY_SIZE,offset=OFFSET)
       PARAMETER (ndim=n+offset,ntimes=NTIMES)
 C     ..
 C     .. Local Scalars ..
       DOUBLE PRECISION t
-      INTEGER j,k,nbpw,quantum
+      INTEGER(8) j,k,nbpw,quantum
 C     ..
 C     .. Local Arrays ..
       DOUBLE PRECISION maxtime(4),mintime(4),avgtime(4),
      $                 times(4,ntimes)
-      INTEGER bytes(4)
+      INTEGER(8) bytes(4)
       CHARACTER label(4)*11
-      INTEGER enabled(4)
+      INTEGER(8) enabled(4)
 C     ..
 C     .. External Functions ..
       DOUBLE PRECISION mysecond
-      INTEGER checktick,realsize
+      INTEGER(8) checktick,realsize
       EXTERNAL mysecond,checktick
-!$    INTEGER omp_get_num_threads
+!$    INTEGER(8) omp_get_num_threads
 !$    EXTERNAL omp_get_num_threads
 C     ..
 C     .. Intrinsic Functions ..
@@ -157,7 +157,7 @@ C     .. Data statements ..
 C     ..
 C     Helper stuff
 C     ..
-      INTEGER, PARAMETER :: gb = 1024 * 1024 * 1024;
+      INTEGER(8), PARAMETER :: gb = 1024 * 1024 * 1024;
       STREAM_TYPE :: dummy
       REAL(KIND=8) :: readset, writeset
 *       --- SETUP --- determine precision and check timing ---
@@ -317,7 +317,7 @@ C     ..
 
 
 *-------------------------------------
-* INTEGER FUNCTION dblesize()
+* INTEGER(8) FUNCTION dblesize()
 *
 * A semi-portable way to determine the precision of DOUBLE PRECISION
 * in Fortran.
@@ -339,16 +339,16 @@ C     ..
 * A semi-portable way to determine the clock granularity
 * Adapted from a code by John Henning of Digital Equipment Corporation
 *
-      INTEGER FUNCTION checktick()
+      INTEGER(8) FUNCTION checktick()
 *     IMPLICIT NONE
 
 C     .. Parameters ..
-      INTEGER n
+      INTEGER(8) n
       PARAMETER (n=20)
 C     ..
 C     .. Local Scalars ..
       DOUBLE PRECISION t1,t2
-      INTEGER i,j,jmin
+      INTEGER(8) i,j,jmin
 C     ..
 C     .. Local Arrays ..
       DOUBLE PRECISION timesfound(n)
@@ -399,11 +399,11 @@ C     ..
 C     ..
 C     .. Arguments ..
       STREAM_TYPE a(*),b(*),c(*)
-      INTEGER n,ntimes
+      INTEGER(8) n,ntimes
 C     ..
 C     .. Local Scalars ..
       DOUBLE PRECISION aa,bb,cc,scalar,suma,sumb,sumc,epsilon
-      INTEGER k
+      INTEGER(8) k
 C     ..
 
 C     Repeat the main loop, but with scalars only.
@@ -471,8 +471,8 @@ C     to confuse aggressive optimizers.
       SUBROUTINE STREAM_copy(a, c, n)
           IMPLICIT NONE
           STREAM_TYPE, DIMENSION(*) :: a, c
-          INTEGER :: n
-          INTEGER :: J
+          INTEGER(8) :: n
+          INTEGER(8) :: J
 !$OMP PARALLEL DO
           DO 30 j = 1,n
               c(j) = a(j)
@@ -485,8 +485,8 @@ C     to confuse aggressive optimizers.
           IMPLICIT NONE
           STREAM_TYPE, DIMENSION(*) :: b, c
           STREAM_TYPE :: scalar
-          INTEGER :: n
-          INTEGER :: J
+          INTEGER(8) :: n
+          INTEGER(8) :: J
 !$OMP PARALLEL DO
           DO 40 j = 1,n
               b(j) = scalar*c(j)
@@ -498,8 +498,8 @@ C     to confuse aggressive optimizers.
       SUBROUTINE STREAM_add(a, b, c, n)
           IMPLICIT NONE
           STREAM_TYPE, DIMENSION(*) :: a, b, c
-          INTEGER :: n
-          INTEGER :: J
+          INTEGER(8) :: n
+          INTEGER(8) :: J
 !$OMP PARALLEL DO
           DO 50 j = 1,n
               c(j) = a(j) + b(j)
@@ -512,8 +512,8 @@ C     to confuse aggressive optimizers.
           IMPLICIT NONE
           STREAM_TYPE, DIMENSION(*) :: a, b, c
           STREAM_TYPE :: scalar
-          INTEGER :: n
-          INTEGER :: J
+          INTEGER(8) :: n
+          INTEGER(8) :: J
 !$OMP PARALLEL DO
           DO 60 j = 1,n
               a(j) = b(j) + scalar*c(j)

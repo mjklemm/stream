@@ -3,7 +3,7 @@ COMPILER := amd
 # Benchmark configuration
 STREAM_TYPE_C=double
 STREAM_TYPE_F=real(kind=8)
-STREAM_ARRAY_SIZE=25000000
+STREAM_ARRAY_SIZE=250000000
 TYPES=-DDO_COPY=1 -DDO_ADD=1 -DDO_SCALE=1 -DDO_TRIAD=1
 NTIMES=10
 OPENMP=1
@@ -15,8 +15,8 @@ TRIAD=1
 
 ifeq ($(COMPILER), amd)
 	FC=amdflang
-	FFLAGS=-O3
-	FLDFLAGS=
+	FFLAGS=-O3 -mcmodel=large
+	FLDFLAGS=-fuse-ld=ld
 
 	CC=amdclang
 	CFLAGS=-O3 -mavx2 -fnt-store=aggressive
